@@ -1,0 +1,8 @@
+Cài đặt SQLAlchemy
+            uv add sqlalchemy "psycopg[binary,pool]"
+connect to sql
+            from sqlalchemy import create_engine
+            engine = create_engine('postgresql+psycopg://root:root@localhost:5432/ny_taxi')
+
+chuyển từ jython sang python
+         uv run jupyter nbconvert --to=script notebook.ipynb
