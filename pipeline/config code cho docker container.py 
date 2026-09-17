@@ -1,0 +1,76 @@
+uv run python ingest_data.py \
+  --pg-user=root \
+  --pg-pass=root \
+  --pg-host=localhost \
+  --pg-port=5432 \
+  --pg-db=ny_taxi \
+  --target-table=test_table \
+  --year=2021 \
+  --month=1 \
+  --chunksize=100000
+
+
+docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e PGADMIN_DEFAULT_PASSWORD="root" \
+  -v pgadmin_data:/var/lib/pgadmin \
+  --network=pg-network \
+  -p 8085:80 \
+  --name=pgadmin \
+  dpage/pgadmin4
+
+
+docker run -it \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v ny_taxi_postgres_data:/var/lib/postgresql \
+  -p 5432:5432 \
+  --network=pg-network \
+  --name pgdatabase \
+  postgres:18
+
+  
+docker run -it --rm \
+--network=pg-network \
+taxi_ingest:v001 \
+--pg-user=root \
+--pg-pass=root \
+--pg-host=pgdatabase \
+--pg-port=5432 \
+--pg-db=ny_taxi \
+--target-table=test_table \
+--year=2021 \
+--month=1 \
+--chunksize=100000
+
+// lệnh này thì kết nối được chứ để -p 5432:5432 thì đéo đc vì nó bị ngu
+
+ docker run -d \
+  --name pgdatabase \
+  --network pg-network \
+  -e POSTGRES_USER=root \
+  -e POSTGRES_PASSWORD=root \
+  -e POSTGRES_DB=ny_taxi \
+  -v ny_taxi_postgres_data:/var/lib/postgresql \
+  -p 5433:5432 \
+  postgres:18
+
+
+docker exec -it pgadmin bash -c "timeout 5 bash -c '</dev/tcp/172.18.0.3/5432' && echo 'OPEN' || echo 'CLOSED'"
+
+
+
+//  thangừ codepaces ngu như một con chó nên không thể kết nối cổng bình thường phải thông qua 1 cổng bên ngoài 5432 và thông qua Cờ --add-host=host.docker.internal:host-gateway sẽ tạo một "lối tắt" để container hiểu host.docker.internal chính là máy chủ Codespaces.
+đcm ghithub ngu mấy cả tối của bố mày 
+// lệnh này để chạy container pgadmin
+docker rm -f pgadmin
+
+docker run -d \
+  --name pgadmin \
+  --network pg-network \
+  --add-host=host.docker.internal:host-gateway \
+  -e PGADMIN_DEFAULT_EMAIL=admin@admin.com \
+  -e PGADMIN_DEFAULT_PASSWORD=root \
+  -p 8085:80 \
+  dpage/pgadmin4
